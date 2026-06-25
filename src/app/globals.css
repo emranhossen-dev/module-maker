@@ -1,12 +1,12 @@
 /* --------------------------------------------------------------------------
-   1. Tailwind CSS v4 Engine Import
-   -------------------------------------------------------------------------- */
-@import "tailwindcss";
-
-/* --------------------------------------------------------------------------
-   2. Premium Google Fonts Integration
+   1. Premium Google Fonts Integration (Must be at the very top for Tailwind v4)
    -------------------------------------------------------------------------- */
 @import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+
+/* --------------------------------------------------------------------------
+   2. Tailwind CSS v4 Engine Import
+   -------------------------------------------------------------------------- */
+@import "tailwindcss";
 
 /* --------------------------------------------------------------------------
    3. Theme Overrides and Base Styles

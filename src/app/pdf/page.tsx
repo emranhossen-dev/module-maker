@@ -18,7 +18,6 @@ import {
   Info
 } from "lucide-react";
 
-// Content Block Interface for the auto-pagination chunker
 interface ContentBlock {
   type: "milestone-header" | "module";
   milestoneId?: string | number;
@@ -31,7 +30,6 @@ export default function PdfViewerPage() {
   const [curriculum, setCurriculum] = useState<CurriculumSchema | null>(null);
   const [pages, setPages] = useState<ContentBlock[][]>([]);
 
-  // Load from local storage on component mount
   useEffect(() => {
     const data = localStorage.getItem("luminous-curriculum");
     let activeCurriculum: CurriculumSchema = sampleCourseData;
@@ -45,12 +43,10 @@ export default function PdfViewerPage() {
     }
     setCurriculum(activeCurriculum);
 
-    // Run dynamic pagination chunker
     const chunked = chunkCurriculumIntoPages(activeCurriculum.milestones);
     setPages(chunked);
   }, []);
 
-  // Helper to map icon name to Lucide components
   const getIconComponent = (name?: string) => {
     switch (name) {
       case "Video": return Video;
@@ -64,33 +60,35 @@ export default function PdfViewerPage() {
     }
   };
 
-  // Pagination height chunker algorithm
+  // SMART CHUNKER: Prevents orphan headers at the bottom of the page
   const chunkCurriculumIntoPages = (milestones: any[]): ContentBlock[][] => {
     const pagesList: ContentBlock[][] = [];
     let currentPageList: ContentBlock[] = [];
     let currentHeight = 0;
-    const maxContentHeight = 710; // Content height limit for A4 (leaving space for letterhead, footer & paddings)
+    const maxContentHeight = 920; 
 
     milestones.forEach((milestone) => {
-      const milestoneHeaderHeight = 90; // Height of milestone badge + title bar
-      
-      // Calculate first module height
+      const milestoneHeaderHeight = 65; 
+
+      // 1. Calculate the height of the FIRST module/class in this milestone
       const firstModule = milestone.modules?.[0];
       let firstModuleHeight = 0;
       if (firstModule) {
         const topicsCount = firstModule.topics?.length || 0;
-        firstModuleHeight = 60 + (topicsCount * 24) + 15;
+        firstModuleHeight = 45 + (topicsCount * 22) + 12;
       }
 
-      // Check if Milestone Header + First Module overflows the remaining height
+      // 2. Combined height required for the header + its first class
       const requiredInitialHeight = milestoneHeaderHeight + firstModuleHeight;
 
+      // 3. If BOTH cannot fit together at the bottom, trigger a page break BEFORE pushing the header
       if (currentHeight + requiredInitialHeight > maxContentHeight && currentPageList.length > 0) {
         pagesList.push(currentPageList);
         currentPageList = [];
         currentHeight = 0;
       }
 
+      // Now safe to push Milestone Header (it will either fit with its 1st class, or start freshly on a new page)
       currentPageList.push({
         type: "milestone-header",
         milestoneId: milestone.milestoneId,
@@ -98,24 +96,16 @@ export default function PdfViewerPage() {
       });
       currentHeight += milestoneHeaderHeight;
 
+      // Loop through all modules inside the milestone
       milestone.modules.forEach((module: any, modIdx: number) => {
         const topicsCount = module.topics?.length || 0;
-        // Module height calculation: base height + topics spacing + bottom margin
-        const moduleHeight = 60 + (topicsCount * 24) + 15;
+        const moduleHeight = 45 + (topicsCount * 22) + 12;
 
-        // If this module overflows (and it's not the first one, since we checked the first module already), start a new page
+        // For subsequent modules (modIdx > 0), if it overflows, it goes to the next page smoothly
         if (modIdx > 0 && currentHeight + moduleHeight > maxContentHeight && currentPageList.length > 0) {
           pagesList.push(currentPageList);
           currentPageList = [];
           currentHeight = 0;
-
-          // Repeat Milestone Header on new page as Continuation
-          currentPageList.push({
-            type: "milestone-header",
-            milestoneId: milestone.milestoneId,
-            title: `${milestone.milestoneTitle} (Continued)`
-          });
-          currentHeight += milestoneHeaderHeight;
         }
 
         currentPageList.push({
@@ -164,7 +154,6 @@ export default function PdfViewerPage() {
         </div>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-          {/* Instructions banner */}
           <div className="flex items-center gap-2 bg-indigo-950/40 border border-indigo-900/30 text-indigo-300 text-[10px] px-3.5 py-1.5 rounded-lg max-w-sm">
             <Info className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
             <span>
@@ -186,15 +175,11 @@ export default function PdfViewerPage() {
         
         {/* PAGE 1: GORGEOUS BROCHURE COVER PAGE */}
         <div className="pdf-page bg-white flex flex-col justify-between relative overflow-hidden shadow-2xl">
-          {/* Decorative Purple Shape (Top-Right) */}
           <div className="absolute top-0 right-0 w-[240mm] h-[240mm] bg-purple-100/60 rounded-full -mr-[110mm] -mt-[110mm] opacity-70 z-0" />
           
-          {/* Padded Content Wrapper for Page 1 */}
           <div className="p-12 flex-1 flex flex-col justify-between z-10 w-full h-full">
-            {/* Centered Large Logo Header */}
             <div className="flex flex-col items-center text-center mt-4 w-full">
               <div className="w-full max-w-[480px] h-20 flex items-center justify-center bg-white mb-3 rounded-xl border border-slate-200/80 shadow-sm p-2">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img 
                   src={curriculum.logoUrl || "https://i.ibb.co.com/Y71spNg4/logo.jpg"} 
                   alt="Luminous Centre Logo" 
@@ -203,7 +188,6 @@ export default function PdfViewerPage() {
               </div>
             </div>
 
-            {/* Centered Hero Curriculum Title & Description */}
             <div className="my-auto max-w-2xl space-y-5 flex flex-col items-center text-center py-6 mx-auto">
               <span className="inline-flex bg-purple-150 text-purple-700 text-xs font-black px-4 py-1.5 rounded-full uppercase tracking-wider w-fit shadow-xs font-outfit">
                 {curriculum.courseSubtitle}
@@ -222,7 +206,6 @@ export default function PdfViewerPage() {
               </p>
             </div>
 
-            {/* Stat Details Grid */}
             <div className="grid grid-cols-3 gap-y-6 gap-x-4 bg-slate-50/90 border border-slate-100 p-6 rounded-2xl shadow-sm">
               {curriculum.stats.slice(0, 6).map((stat, sIdx) => {
                 const Icon = getIconComponent(stat.iconName);
@@ -240,7 +223,6 @@ export default function PdfViewerPage() {
               })}
             </div>
 
-            {/* Cover Page Footer Banner */}
             <div className="flex justify-center items-center border-t border-slate-150 pt-5 mt-6">
               <a 
                 href={`https://${curriculum.websiteUrl}`} 
@@ -261,14 +243,13 @@ export default function PdfViewerPage() {
 
         {/* PAGES 2+: CURRICULUM SYLLABUS PAGES */}
         {pages.map((pageBlocks, pIdx) => {
-          const currentPageNumber = pIdx + 2; // Page 1 is the cover page
+          const currentPageNumber = pIdx + 2;
 
           return (
-            <div key={pIdx} className="pdf-page bg-white flex flex-col justify-between relative shadow-2xl">
+            <div key={pIdx} className="pdf-page bg-white flex flex-col justify-start relative shadow-2xl">
               
               {/* Full-width Letterhead Banner Image */}
               <div className="w-full overflow-hidden z-10 shrink-0">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img 
                   src="https://i.ibb.co.com/jP2zSRLG/Whats-App-Image-2026-06-25-at-1-03-56-PM.jpg" 
                   alt="Luminous Centre Letterhead Banner" 
@@ -276,23 +257,22 @@ export default function PdfViewerPage() {
                 />
               </div>
 
-              {/* Padded Content Wrapper for Page 2+ */}
-              <div className="px-12 pb-12 pt-6 flex-1 flex flex-col justify-between z-10 overflow-hidden w-full h-full">
+              {/* Padded Content Wrapper */}
+              <div className="px-12 pb-6 pt-3 flex-1 flex flex-col justify-between z-10 overflow-hidden w-full h-full">
                 
                 {/* Syllabus Content Tree */}
-                <div className="space-y-6">
+                <div className="space-y-2.5 flex-1">
                   {pageBlocks.map((block, bIdx) => {
                     
-                    // Render Milestone Header block
                     if (block.type === "milestone-header") {
                       return (
-                        <div key={bIdx} className="flex flex-col mb-4">
-                          <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Milestone</span>
+                        <div key={bIdx} className="flex flex-col mt-3 mb-1">
+                          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1">Milestone</span>
                           <div className="flex items-stretch gap-1">
-                            <div className="bg-indigo-600 text-white font-black text-xs px-3.5 flex items-center justify-center rounded-l-xl shadow-sm">
+                            <div className="bg-indigo-600 text-white font-black text-sm px-4 flex items-center justify-center rounded-l-xl shadow-sm">
                               {block.milestoneId}
                             </div>
-                            <div className="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-extrabold text-[11px] px-4 py-2.5 rounded-r-xl flex items-center shadow-sm uppercase tracking-wide">
+                            <div className="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-black text-[13px] px-4 py-2 rounded-r-xl flex items-center shadow-sm uppercase tracking-wide">
                               {block.title}
                             </div>
                           </div>
@@ -300,24 +280,20 @@ export default function PdfViewerPage() {
                       );
                     }
 
-                    // Render Module Block
                     return (
-                      <div key={bIdx} className="relative bg-slate-50/70 border border-slate-100 p-5 rounded-2xl shadow-xs">
-                        {/* Vertical timeline line */}
-                        <div className="absolute left-6 top-6 bottom-6 w-[2px] bg-indigo-500/25" />
+                      <div key={bIdx} className="relative bg-slate-50/70 border border-slate-100 p-3.5 rounded-xl shadow-xs">
+                        <div className="absolute left-6 top-4 bottom-4 w-[2px] bg-indigo-500/25" />
                         
-                        {/* Module Title */}
                         <div className="relative z-10 flex items-start gap-2.5 pl-6">
-                          <div className="absolute -left-[5px] top-[4px] w-2.5 h-2.5 rounded-full bg-indigo-650 ring-4 ring-white" />
-                          <h4 className="text-xs font-black text-slate-800 uppercase tracking-wide flex items-center gap-1.5">
-                            <span className="text-indigo-600">📂</span> {block.title}
+                          <div className="absolute -left-[5px] top-[5px] w-2.5 h-2.5 rounded-full bg-indigo-650 ring-4 ring-white" />
+                          <h4 className="text-[13px] font-black text-slate-800 uppercase tracking-wide flex items-center gap-1.5">
+                            <span className="text-indigo-600 text-sm">📂</span> {block.title}
                           </h4>
                         </div>
                         
-                        {/* Indented Topics */}
-                        <ul className="pl-12 mt-3.5 space-y-2 relative z-10">
+                        <ul className="pl-12 mt-1.5 space-y-0.5 relative z-10">
                           {block.topics?.map((topic, tIdx) => (
-                            <li key={tIdx} className="text-[11px] text-slate-650 font-semibold leading-relaxed list-disc marker:text-indigo-500 font-siliguri">
+                            <li key={tIdx} className="text-[12px] text-slate-700 font-bold leading-relaxed list-disc marker:text-indigo-500 font-siliguri">
                               {topic}
                             </li>
                           ))}
@@ -328,21 +304,21 @@ export default function PdfViewerPage() {
                 </div>
 
                 {/* Syllabus Page Footer */}
-                <div className="flex justify-between items-center border-t border-slate-150 pt-4 mt-6">
+                <div className="flex justify-between items-center border-t border-slate-150 pt-3 mt-4 shrink-0">
                   <a 
                     href={`https://${curriculum.websiteUrl}`} 
                     target="_blank" 
                     rel="noopener noreferrer" 
                     className="flex items-stretch rounded-lg overflow-hidden border border-purple-600 shadow-sm cursor-pointer hover:opacity-90 transition-opacity"
                   >
-                    <span className="bg-purple-600 text-white text-[9px] font-black px-3.5 py-1.5 flex items-center uppercase tracking-wider">
+                    <span className="bg-purple-600 text-white text-[9px] font-black px-3 py-1 flex items-center uppercase tracking-wider">
                       {curriculum.enrollText}
                     </span>
-                    <span className="bg-white text-slate-900 border-l border-purple-600 text-[10px] font-black px-3.5 py-1.5 flex items-center tracking-wider font-outfit">
+                    <span className="bg-white text-slate-900 border-l border-purple-600 text-[10px] font-black px-3 py-1 flex items-center tracking-wider font-outfit">
                       {curriculum.websiteUrl}
                     </span>
                   </a>
-                  <span className="text-[11px] font-black text-slate-400 font-outfit">
+                  <span className="text-[12px] font-black text-slate-400 font-outfit">
                     {currentPageNumber}
                   </span>
                 </div>

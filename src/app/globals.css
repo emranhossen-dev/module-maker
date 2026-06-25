@@ -1,26 +1,135 @@
+/* --------------------------------------------------------------------------
+   1. Tailwind CSS v4 Engine Import
+   -------------------------------------------------------------------------- */
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* --------------------------------------------------------------------------
+   2. Premium Google Fonts Integration
+   -------------------------------------------------------------------------- */
+@import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* --------------------------------------------------------------------------
+   3. Theme Overrides and Base Styles
+   -------------------------------------------------------------------------- */
+@layer base {
+  body {
+    background-color: #030712; /* Slate 950 / Gray 950 */
+    color: #f3f4f6; /* Gray 100 */
+    font-family: 'Outfit', sans-serif;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Custom Font Utilities */
+.font-outfit {
+  font-family: 'Outfit', sans-serif;
+}
+
+.font-siliguri {
+  font-family: 'Hind Siliguri', 'Outfit', sans-serif;
+}
+
+/* --------------------------------------------------------------------------
+   4. A4 Page Layout System (Screen vs Print)
+   -------------------------------------------------------------------------- */
+
+/* Target size of A4 is 210mm x 297mm.
+   We lock the dimensions on both screen (for perfect preview) and print. */
+.pdf-page {
+  width: 210mm;
+  height: 297mm;
+  position: relative;
+  box-sizing: border-box;
+  background-color: #ffffff !important;
+  color: #0f172a !important; /* Slate 900 */
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* Screen Mode styling: render as sheets of paper floating on dark background */
+@media screen {
+  .pdf-page {
+    margin: 2rem auto;
+    border-radius: 8px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 12px 30px -10px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+}
+
+/* Print Mode styling: optimize for raw physical layout margins */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  body, html {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .pdf-page {
+    margin: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    page-break-after: always;
+    break-after: page;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   5. Syllabus & Timeline Specific Styles
+   -------------------------------------------------------------------------- */
+
+/* Custom Timeline line, folder, and layout styling */
+.timeline-line {
+  position: absolute;
+  left: 20px;
+  top: 12px;
+  bottom: 12px;
+  width: 3px;
+  background: #6366f1; /* Indigo 500 */
+  border-radius: 9999px;
+  opacity: 0.8;
+}
+
+.timeline-dot {
+  position: absolute;
+  left: -23px;
+  top: 15px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background-color: #6366f1;
+  border: 2.5px solid #ffffff;
+  box-shadow: 0 0 0 2px #6366f1;
+  z-index: 10;
+}
+
+.custom-bullet-list li {
+  position: relative;
+  padding-left: 1rem;
+}
+
+.custom-bullet-list li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: #8b5cf6; /* Purple 500 */
+  font-weight: bold;
 }
